@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Data API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        input, button {
+            padding: 8px;
+            margin: 5px;
+            width: 100%;
+        }
+
+        table {
+            width: 100%;
+            margin-top: 20px;
+            border-collapse: collapse;
+        }
+
+        table, th, td {
+            border: 1px solid #ccc;
+        }
+
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+
+        .form-group {
+            margin-bottom: 10px;
+        }
+
+        .form-group input {
+            width: 48%;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Weather Data API Interface</h1>
+
+        <h3>Add Weather Data</h3>
+        <div class="form-group">
+            <input type="text" id="date" placeholder="Date (YYYY-MM-DD)">
+            <input type="text" id="time" placeholder="Time (hh:mm:ss)">
+        </div>
+        <div class="form-group">
+            <input type="text" id="timezone_offset" placeholder="Timezone Offset (e.g., UTC-10:00)">
+            <input type="number" id="latitude" placeholder="Latitude">
+        </div>
+        <div class="form-group">
+            <input type="number" id="longitude" placeholder="Longitude">
+            <input type="number" id="water_temperature" placeholder="Water Temperature (°C)">
+        </div>
+        <div class="form-group">
+            <input type="number" id="ambient_air_temperature" placeholder="Ambient Air Temperature (°C)">
+            <input type="number" id="humidity" placeholder="Humidity (g/kg)">
+        </div>
+        <div class="form-group">
+            <input type="number" id="wind_speed" placeholder="Wind Speed (km/h)">
+            <input type="number" id="wind_direction" placeholder="Wind Direction (°)">
+        </div>
+        <div class="form-group">
+            <input type="number" id="precipitation" placeholder="Precipitation (mm)">
+            <input type="number" id="haze" placeholder="Haze (%)">
+        </div>
+        <div class="form-group">
+            <input type="number" id="becquerel" placeholder="Becquerel (Bq)">
+        </div>
+        <button onclick="addData()">Add Data</button>
+
+        <h3>Weather Data</h3>
+        <table id="weatherTable">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Date</th>
+                    <th>Time</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        const apiUrl = 'http://127.0.0.1:5000/data';  // Your Flask API endpoint
+
+        // Fetch and display all weather data
+        function getData() {
+            fetch(apiUrl)
+                .then(response => response.json())
+                .then(data => {
+                    const tableBody = document.querySelector("#weatherTable tbody");
+                    tableBody.innerHTML = '';  // Clear existing data
+                    data.forEach(record => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${record.id}</td>
+                            <td>${record.date}</td>
+                            <td>${record.time}</td>
+                            <td>
+                                <button onclick="deleteData(${record.id})">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(row);
+                    });
+                });
+        }
+
+        // Add new weather data
+        function addData() {
+            const data = {
+                date: document.getElementById('date').value,
+                time: document.getElementById('time').value,
+                timezone_offset: document.getElementById('timezone_offset').value,
+                latitude: parseFloat(document.getElementById('latitude').value),
+                longitude: parseFloat(document.getElementById('longitude').value),
+                water_temperature: parseFloat(document.getElementById('water_temperature').value),
+                ambient_air_temperature: parseFloat(document.getElementById('ambient_air_temperature').value),
+                humidity: parseFloat(document.getElementById('humidity').value),
+                wind_speed: parseFloat(document.getElementById('wind_speed').value),
+                wind_direction: parseFloat(document.getElementById('wind_direction').value),
+                precipitation: parseFloat(document.getElementById('precipitation').value),
+                haze: parseFloat(document.getElementById('haze').value),
+                becquerel: parseFloat(document.getElementById('becquerel').value)
+            };
+
+            fetch(apiUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(data)
+            })
+            .then(response => response.json())
+            .then(result => {
+                alert(result.message);
+                getData();  // Refresh data
+            })
+            .catch(error => console.error('Error adding data:', error));
+        }
+
+        // Delete a weather data record by ID
+        function deleteData(id) {
+            fetch(`${apiUrl}/${id}`, {
+                method: 'DELETE'
+            })
+            .then(response => response.json())
+            .then(result => {
+                alert(result.message);
+                getData();  // Refresh data
+            })
+            .catch(error => console.error('Error deleting data:', error));
+        }
+
+        // Initialize the page
+        window.onload = getData;
+    </script>
+</body>
+</html>
