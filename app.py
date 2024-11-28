@@ -230,3 +230,55 @@ if __name__ == '__main__':
 
 
 
+
+
+
+# not working properly the below as its not letting me take a specific observation from certain dete
+@app.route('/observations/range', methods=['GET'])
+def get_observations_by_date_range():
+    # Get start_date and end_date from query parameters
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+
+    if not start_date or not end_date:
+        return jsonify({"error": "Both start_date and end_date are required"}), 400
+
+    try:
+        # Convert string to datetime objects
+        start_date = datetime.strptime(start_date, '%Y-%m-%d').date()
+        end_date = datetime.strptime(end_date, '%Y-%m-%d').date()
+
+        # Query the database for observations within the date range
+        observations = Observation.query.filter(Observation.date >= start_date, Observation.date <= end_date).all()
+
+        # If no observations are found
+        if not observations:
+            return jsonify({"message": "No observations found in the specified date range"}), 404
+
+        # Serialize observations to JSON
+        observations_list = []
+        for observation in observations:
+            observations_list.append({
+                "id": observation.id,
+                "date": observation.date.strftime('%Y-%m-%d'),
+                "time": observation.time.strftime('%H:%M:%S'),
+                "time_zone_offset": observation.time_zone_offset,
+                "coordinates": observation.coordinates,
+                "temperature_water": observation.temperature_water,
+                "temperature_air": observation.temperature_air,
+                "humidity": observation.humidity,
+                "wind_speed": observation.wind_speed,
+                "wind_direction": observation.wind_direction,
+                "precipitation": observation.precipitation,
+                "haze": observation.haze,
+                "becquerel": observation.becquerel,
+                "notes": observation.notes,
+                "created": observation.created.strftime('%Y-%m-%d %H:%M:%S'),
+                "updated": observation.updated.strftime('%Y-%m-%d %H:%M:%S') if observation.updated else None,
+                "deleted": observation.deleted.strftime('%Y-%m-%d %H:%M:%S') if observation.deleted else None
+            })
+
+        return jsonify(observations_list), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
